@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, {useEffect, useState} from 'react';
 import { styled } from '@mui/material/styles';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -10,6 +10,10 @@ import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
 
 import SelectNewState from './select-new-state'
+import EditButton from './edit-button';
+
+import { getAllDn } from '../api/directory-number';
+
 
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -37,20 +41,42 @@ function createData(
   resourceState: string,
   currentOcn: string,
   userData: any,
-  protein: number,
+//   protein: number,
 ) {
-  return { dn, resourceState, currentOcn, userData, protein };
+  return { dn, resourceState, currentOcn, userData };
 }
 
 const rows = [
-  createData('9500100134', 'Available', '6010', {"DTText" : "prepaid", "customCode": "123"}, 4.0),
-  createData('9500100135', 'Hold For Loading', '6011', {"DTText" : "prepaid"}, 4.3),
-  createData('9500100136', 'Reserved', '6012', {"DTText" : "prepaid"}, 6.0),
-  createData('9500100137', 'Aging', '6010', {"DTText" : "prepaid"}, 4.3),
-  createData('9500100138', 'Active', '6012', {"DTText" : "prepaid"}, 3.9),
+  createData('9500100134', 'Available', '6010', {"DTText" : "prepaid", "customCode": "123"}),
+  createData('9500100135', 'Hold For Loading', '6011', {"DTText" : "prepaid"}),
+  createData('9500100136', 'Reserved', '6012', {"DTText" : "prepaid"}),
+  createData('9500100137', 'Aging', '6010', {"DTText" : "prepaid"}),
+  createData('9500100138', 'Active', '6012', {"DTText" : "prepaid"}),
 ];
 
+
+
 export default function DnManagementTable() {
+
+    const [directoryNumbers, setDirectoryNumbers] = useState([]);
+
+    async function fetchDirNums() {
+            const dirNums = await getAllDn();
+            console.log(dirNums)
+            dirNums.forEach(dn => {
+                dn.userData.forEach(
+                    ud => { delete ud.id;  delete ud.typeId}
+                )
+            });
+            setDirectoryNumbers(dirNums);
+    }
+    
+    useEffect(() => {
+        fetchDirNums()
+    }, []);
+
+
+    
   return (
     <TableContainer component={Paper}>
       <Table sx={{ minWidth: 700 }} aria-label="customized table">
@@ -60,11 +86,12 @@ export default function DnManagementTable() {
             <StyledTableCell align="center">Resource State</StyledTableCell>
             <StyledTableCell align="center">Current OCN</StyledTableCell>
             <StyledTableCell align="center">User Data</StyledTableCell>
-            <StyledTableCell align="center">Update New State</StyledTableCell>
+            <StyledTableCell align="center">Action</StyledTableCell>
+            <StyledTableCell align="center">Edit</StyledTableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {rows.map((row) => (
+          {directoryNumbers && directoryNumbers.map((row) => (
             <StyledTableRow key={row.dn}>
               <StyledTableCell component="th" scope="row">
                 {row.dn}
@@ -72,7 +99,8 @@ export default function DnManagementTable() {
               <StyledTableCell align="center">{row.resourceState}</StyledTableCell>
               <StyledTableCell align="center">{row.currentOcn}</StyledTableCell>
               <StyledTableCell align="center">{JSON.stringify(row.userData)}</StyledTableCell>
-              <StyledTableCell align="center"><SelectNewState></SelectNewState></StyledTableCell>
+              <StyledTableCell align="center"><SelectNewState fetchDirNums={fetchDirNums} id={row.id}></SelectNewState></StyledTableCell>
+              <StyledTableCell align="center"><EditButton></EditButton></StyledTableCell>
             </StyledTableRow>
           ))}
         </TableBody>
